@@ -4,6 +4,7 @@ import torch.optim as optim
 import pickle
 import os
 import numpy as np
+import time
 
 import datasets
 import models
@@ -29,23 +30,19 @@ def my_collate(batch):
 
 if __name__ == '__main__':
 
-    version = '1202-3'
-    save_path = './result/' + version + '/'
-    os.makedirs(save_path)
-    epochs = 1000
-    batch_size = 128
+    epochs = 2
 
 #%%
 
     device = torch.device('cuda')
 #    device = torch.device('cpu')
 
-    train_data = datasets.Char_Filtered_Useful_Pad('train')
+    train_data = datasets.Char_Filtered_Useful_Pad('train', 0.1)
     test_data = datasets.Char_Filtered_Useful_Pad('test')
-    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True,
+    train_loader = DataLoader(train_data, batch_size=256, shuffle=True,
                               num_workers=4, pin_memory=True,
                               collate_fn=my_collate)
-    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=True,
+    test_loader = DataLoader(test_data, batch_size=4, shuffle=True,
                              num_workers=4, pin_memory=True,
                              collate_fn=my_collate)
 
@@ -55,14 +52,29 @@ if __name__ == '__main__':
 
 #%%
 
+#    for idx, (sample, lengths, target) in enumerate(train_loader):
+##        print(sample.shape, sample.dtype)
+##        print(target.shape, target.dtype)
+##        model(sample, lengths)
+#        outputs = model(sample, lengths).squeeze()
+#        print(outputs.shape)
+#        loss = model.loss(outputs, target)
+#        print(loss)
+#        loss.backward()
+#        model.clip_grad()
+#        optimizer.step()
+#        break
+
+#%%
+
     try:
         train_losses = []
         test_losses = []
-        train_interval = len(train_loader) // 4 # print interval
         for epoch in range(epochs):
             print('\nEpoch:', epoch + 1)
-            # train
+
             train_loss = 0
+            start = time.time()
             for idx, (sample, lengths, target) in enumerate(train_loader):
                 sample = sample.to(device)
                 target = target.to(device)
@@ -73,29 +85,23 @@ if __name__ == '__main__':
                 model.clip_grad()
                 optimizer.step()
                 train_loss += float(loss)
-                if idx > 0 and idx % train_interval == 0:
-                    print(f'{100*(idx+1)/len(train_loader):.2f}%  ',
-                          train_loss/(idx+1)/batch_size)
-            train_loss /= len(train_data)
-            print('Training loss:', train_loss)
-            torch.save(model.state_dict(), f'{save_path}{epoch+1}.pth')
-            print('Model saved')
-            # test
-            test_loss = 0
-            with torch.no_grad():
-                for idx, (sample, lengths, target) in enumerate(test_loader):
-                    sample = sample.to(device)
-                    target = target.to(device)
-                    outputs = model(sample, lengths).squeeze()
-                    test_loss += float(model.loss(outputs, target))
-            test_loss /= len(test_data)
-            print('Test loss:', test_loss)
-            # log
-            train_losses.append(train_loss)
-            test_losses.append(test_loss)
+            train_losses.append(train_loss / len(train_data))
+            print('Training loss:', train_losses[-1])
+            print(time.time() - start)
+            break
+
+#            test_loss = 0
+#            start = time.time()
+#            with torch.no_grad():
+#                for idx, (sample, lengths, target) in enumerate(test_loader):
+#                    sample = sample.to(device)
+#                    target = target.to(device)
+#                    outputs = model(sample, lengths).squeeze()
+#                    test_loss += float(model.loss(outputs, target))
+#            test_losses.append(test_loss / len(test_data))
+#            print('Test loss:', test_losses[-1])
+#            print(time.time() - start)
+#            break
 
     finally:
-        with open(save_path + 'log.pkl', mode='wb') as f:
-            pickle.dump({'training loss': train_losses,
-                         'test loss': test_losses}, f)
-        print('Log saved')
+        pass

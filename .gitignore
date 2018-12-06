@@ -3,3 +3,6 @@
 *.pth
 *.csv
 *.txt
+*.png
+*.xlsx
+*.json
