@@ -39,14 +39,14 @@ if __name__ == '__main__':
 
     train_data = datasets.Char_Filtered_Useful_Pad('train', 0.1)
     test_data = datasets.Char_Filtered_Useful_Pad('test')
-    train_loader = DataLoader(train_data, batch_size=256, shuffle=True,
-                              num_workers=4, pin_memory=True,
+    train_loader = DataLoader(train_data, batch_size=128, shuffle=True,
+                              num_workers=2, pin_memory=True,
                               collate_fn=my_collate)
-    test_loader = DataLoader(test_data, batch_size=4, shuffle=True,
-                             num_workers=4, pin_memory=True,
-                             collate_fn=my_collate)
+#    test_loader = DataLoader(test_data, batch_size=4, shuffle=True,
+#                             num_workers=4, pin_memory=True,
+#                             collate_fn=my_collate)
 
-    model = models.Net1_Pad(len(train_data.voc), 64, 1).to(device)
+    model = models.Net1_Pad(len(train_data.voc), 64, 2).to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-4)
 

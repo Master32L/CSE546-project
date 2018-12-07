@@ -19,7 +19,8 @@ if __name__ == '__main__':
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-v', '--version')
     group.add_argument('-t', '--time', action='store_true')
-    parser.add_argument('-b', '--batch_size', type=int, default=128)
+    parser.add_argument('dim', type=int)
+    parser.add_argument('-b', '--batch_size', type=int, default=512)
 
     args = parser.parse_args()
 
@@ -35,13 +36,15 @@ if __name__ == '__main__':
     train_data = datasets.Char_Pad('train')
     test_data = datasets.Char_Pad('test')
     train_loader = DataLoader(train_data, batch_size=args.batch_size,
-                              shuffle=True, num_workers=2, pin_memory=True,
+                              shuffle=True, num_workers=4, pin_memory=True,
                               collate_fn=datasets.collate_pad)
     test_loader = DataLoader(test_data, batch_size=args.batch_size,
-                             shuffle=True, num_workers=2, pin_memory=True,
+                             shuffle=True, num_workers=4, pin_memory=True,
                              collate_fn=datasets.collate_pad)
 
-    model = models.Net1_Pad(len(train_data.voc), 64, 1).to(device)
+    model = models.Net1_Pad(len(train_data.voc), args.dim, 1)
+    datasets.load_glove(model)
+    model.to(device)
 
     lr = 1e-3
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)

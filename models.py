@@ -1,5 +1,4 @@
 import torch.nn as nn
-import torch.nn.functional as F
 
 #%%
 
@@ -20,10 +19,6 @@ class Net1(nn.Module):
         _, hidden = self.gru(x, None)
         return self.out(hidden.view(1, -1))
 
-    def loss(self, prediction, label):
-        loss_val = F.mse_loss(prediction, label)
-        return loss_val
-
     def clip_grad(self, clip=50.0):
         nn.utils.clip_grad_norm_(self.encoder.parameters(), clip)
         nn.utils.clip_grad_norm_(self.gru.parameters(), clip)
@@ -39,3 +34,4 @@ class Net1_Pad(Net1):
         _, hidden = self.gru(x, None)
         hidden = hidden.permute(1, 0, 2).contiguous()
         return self.out(hidden.view(-1, self.feature_size*self.num_layers))
+

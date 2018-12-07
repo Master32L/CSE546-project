@@ -4,9 +4,10 @@ import numpy as np
 
 #%%
 
-VERSION = '1202-2'
+VERSION = '1206-4'
 with open(f'./result/{VERSION}/log.pkl', mode='rb') as f:
     log = pickle.load(f)
+print(np.min(log['test loss']))
 
 #%%
 
