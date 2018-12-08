@@ -20,7 +20,11 @@ if __name__ == '__main__':
     group.add_argument('-v', '--version')
     group.add_argument('-t', '--time', action='store_true')
     parser.add_argument('dim', type=int)
+    parser.add_argument('-f', '--fix', action='store_true')
     parser.add_argument('-b', '--batch_size', type=int, default=512)
+    parser.add_argument('-n', '--num_worker', type=int, default=2)
+    parser.add_argument('-l', '--lr', type=float, default=1e-3)
+    parser.add_argument('-d', '--decay', type=float, default=1e-4)
 
     args = parser.parse_args()
 
@@ -33,27 +37,29 @@ if __name__ == '__main__':
     device = torch.device('cuda')
 #    device = torch.device('cpu')
 
-    train_data = datasets.Char_Pad('train')
-    test_data = datasets.Char_Pad('test')
+    train_data = datasets.Word_Pad('train')
+    test_data = datasets.Word_Pad('test')
     train_loader = DataLoader(train_data, batch_size=args.batch_size,
-                              shuffle=True, num_workers=4, pin_memory=True,
+                              shuffle=True, num_workers=args.num_worker,
+                              pin_memory=True,
                               collate_fn=datasets.collate_pad)
     test_loader = DataLoader(test_data, batch_size=args.batch_size,
-                             shuffle=True, num_workers=4, pin_memory=True,
+                             shuffle=True, num_workers=args.num_worker,
+                             pin_memory=True,
                              collate_fn=datasets.collate_pad)
 
     model = models.Net1_Pad(len(train_data.voc), args.dim, 1)
-    datasets.load_glove(model)
+    datasets.load_glove(model, args.fix)
     model.to(device)
 
-    lr = 1e-3
-    optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
+    lr = args.lr
+    optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=args.decay)
 
 #%%
 
+    train_losses = []
+    test_losses = []
     try:
-        train_losses = []
-        test_losses = []
         train_interval = len(train_loader) // 4 # print interval
         epoch = 0
         stuck = 0
@@ -109,13 +115,13 @@ if __name__ == '__main__':
                 stuck = 0
             else:
                 stuck += 1
-            if stuck == 5:
+            if stuck > 3:
                 adjust += 1
-                stuck = 0
-                lr *= 0.5
+                lr *= 0.1
                 optimizer = optim.Adam(model.parameters(), lr=lr,
                             weight_decay=1e-4)
-            if adjust == 5:
+                print(f'lr changed to {lr}')
+            if adjust == 3:
                 break
 
     finally:

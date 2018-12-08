@@ -148,10 +148,11 @@ def collate_pad(batch):
     return data, list(lengths[order]), torch.cat(labels)
 
 
-def load_glove(model):
+def load_glove(model, fix):
     dim = model.encoder.weight.shape[1]
     weight_path = f'./data/glove_weight_{dim}.pkl'
     with open(weight_path, mode='rb') as f:
         weight = pickle.load(f)
     model.encoder.weight.data = weight
-    model.encoder.weight.requires_grad = False
+    if fix:
+        model.encoder.weight.requires_grad = False

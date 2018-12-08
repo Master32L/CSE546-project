@@ -19,7 +19,7 @@ df.to_csv(f'search-{VERSION}.csv', index=False)
 
 #%%
 
-opt_trial = np.argmin([np.min(l) for l in log[0]])
+opt_trial = np.argmin([np.min(l) for l in log[1]])
 x = np.arange(len(log[1][opt_trial])) + 1
 
 plt.plot(x, log[0][opt_trial], c='r', linewidth=2)

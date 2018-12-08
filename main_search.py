@@ -16,7 +16,7 @@ import models
 
 def trial(train_loader, test_loader, device, feature_dim, weight_decay, args):
     model = models.Net1_Pad(len(train_loader.dataset.voc),
-                            feature_dim, 1).to(device)
+                            feature_dim, 2).to(device)
     lr = 5e-4
     multiplier = 0.5
     optimizer = optim.Adam(model.parameters(), lr=lr,
@@ -75,13 +75,13 @@ def trial(train_loader, test_loader, device, feature_dim, weight_decay, args):
             stuck = 0
         else:
             stuck += 1
-        if stuck == 5:
+        if stuck == 4:
             adjust += 1
             stuck = 0
             lr *= multiplier
             optimizer = optim.Adam(model.parameters(), lr=lr,
                         weight_decay=weight_decay)
-        if adjust == 5:
+        if adjust == 3:
             break
     return train_losses, test_losses
 
@@ -116,21 +116,18 @@ if __name__ == '__main__':
     all_feature_dim, all_weight_decay = [], []
     count = 0
     try:
-        while True:
+        for d in [256]:
             count += 1
-            feature_dim = int(2**np.random.choice(np.arange(4, 9)))
-            weight_decay = float(10.0**np.random.uniform(-5, -1))
             if args.time:
-                feature_dim = 256
-            print('\nTrial', count, 'dim', feature_dim,
-                  'decay', weight_decay)
+                d = 256
+            print('\nTrial', count, 'dim', d,
+                  'decay', 1e-4)
             train_losses, test_losses = trial(train_loader, test_loader,
-                                              device, feature_dim,
-                                              weight_decay, args)
+                                              device, d, 1e-4, args)
             all_train_loss.append(train_losses)
             all_test_loss.append(test_losses)
-            all_feature_dim.append(feature_dim)
-            all_weight_decay.append(weight_decay)
+            all_feature_dim.append(d)
+            all_weight_decay.append(1e-4)
             if args.time:
                 break
     finally:
